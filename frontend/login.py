@@ -8,7 +8,7 @@ import pickle
 import datetime
 import os
 import pandas as pd
-from signup import parse_qr_data
+import io
 
 # Database Paths
 DB_PATH = os.path.abspath("students.db")
@@ -47,12 +47,23 @@ def scan_qr_code():
         if data:
             email_match = re.search(r"Teacher Email:\s*([\w.\-]+@[\w.\-]+)", data)
             code_match = re.search(r"Unique Code:\s*([\w\d]+)", data)
+            name_match = re.search(r"Name:\s*([\w\s]+)", data)
 
             if email_match and code_match:
                 email = email_match.group(1)
                 unique_code = code_match.group(1)
+                
+                if name_match:
+                    teacher_name = name_match.group(1).strip()
+                    # Remove "Teacher Email" from name if mistakenly included
+                    teacher_name = re.sub(r"Teacher\s*Email.*", "", teacher_name).strip()
+                    st.session_state.teacher_name = teacher_name  # Store cleaned teacher name
+                
+                subject_match = re.search(r"Subject:\s*([\w\s]+)", data)
+                if subject_match:
+                    st.session_state.subject_name = subject_match.group(1).strip()  # Store subject name
+                
                 st.success(f"✅ QR Code Detected for {email}")
-                parse_qr_data(data)
                 cap.release()
                 cv2.destroyAllWindows()
                 return email, unique_code
@@ -109,15 +120,26 @@ def mark_attendance(name):
         conn.commit()
 
 # Export unique attendance with the oldest timestamp
-def export_attendance_to_excel():
+# Export unique attendance with the oldest timestamp
+def export_attendance_to_excel(teacher_name, subject_name):
+    formatted_date = datetime.datetime.now().strftime("%d-%m-%Y")  # Format: 30-03-2025
+    
+    # Sanitize names to remove problematic characters
+    sanitized_teacher_name = re.sub(r'[^a-zA-Z0-9_]', '_', teacher_name.strip())
+    sanitized_subject_name = re.sub(r'[^a-zA-Z0-9_]', '_', subject_name.strip())
+    
+    filename = f"{sanitized_teacher_name}_{sanitized_subject_name}_{formatted_date}.xlsx"
+
+    # Generate the DataFrame directly from the database
     with sqlite3.connect(ATTENDANCE_DB_PATH) as conn:
         df = pd.read_sql("SELECT name, date, time FROM attendance", conn)
+    
+    # Save the DataFrame to a BytesIO object instead of a file
+    excel_file = io.BytesIO()
+    df.to_excel(excel_file, index=False, engine="openpyxl")
+    excel_file.seek(0)  # Move the cursor to the beginning of the file
 
-        # ✅ Save as Excel with proper formatting
-        df.to_excel(EXCEL_FILE_PATH, index=False)
-
-    return EXCEL_FILE_PATH
-
+    return excel_file, filename
 
 # Scan and recognize student faces
 def scan_faces():
@@ -161,6 +183,9 @@ def show_login():
         st.session_state.attendance_done = False
     if "close_attendance" not in st.session_state:
         st.session_state.close_attendance = False
+    if "recognized_students" not in st.session_state:
+        st.session_state.recognized_students = set()
+
 
     if st.button("📸 Scan QR Code"):
         email, unique_code = scan_qr_code()
@@ -176,14 +201,20 @@ def show_login():
         st.success("✅ Attendance has been recorded.")
     
     if st.button("📥 Download Attendance Report"):
-        file_path = export_attendance_to_excel()
-        with open(file_path, "rb") as file:
+        if "teacher_name" in st.session_state and "subject_name" in st.session_state:
+            # Generate the Excel file in memory
+            excel_file, filename = export_attendance_to_excel(st.session_state.teacher_name, st.session_state.subject_name)
+            
+            # Offer the file for download
             st.download_button(
                 label="📂 Download Excel",
-                data=file,
-                file_name="attendance.xlsx",
+                data=excel_file,
+                file_name=filename,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+        else:
+            st.error("❌ Teacher name or subject not found. Please scan QR code again.")
+
 
 # Run the login function
 if __name__ == "__main__":

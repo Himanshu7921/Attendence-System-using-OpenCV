@@ -13,24 +13,35 @@ def hash_password(password):
 def init_db():
     conn = sqlite3.connect("teachers.db")
     cursor = conn.cursor()
+
+    # Create table if not exists
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS teachers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT, 
             email TEXT UNIQUE,
             unique_code TEXT UNIQUE,
             subject TEXT,
             password TEXT
         )
     ''')
-    conn.commit()
+
+    # Check if 'name' column exists, if not, add it
+    cursor.execute("PRAGMA table_info(teachers);")
+    columns = [col[1] for col in cursor.fetchall()]
+    if "name" not in columns:
+        cursor.execute("ALTER TABLE teachers ADD COLUMN name TEXT;")
+        conn.commit()
+
     conn.close()
+
 
 # Function to validate email format
 def is_valid_email(email):
     return re.match(r"[^@]+@[^@]+\.[^@]+", email)
 
 # Function to register a teacher
-def register_teacher(email, unique_code, subject, password):
+def register_teacher(name, email, unique_code, subject, password):
     if not is_valid_email(email):
         return "Invalid email format."
     
@@ -41,8 +52,8 @@ def register_teacher(email, unique_code, subject, password):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("INSERT INTO teachers (email, unique_code, subject, password) VALUES (?, ?, ?, ?)", 
-                       (email, unique_code, subject, hash_password(password)))
+        cursor.execute("INSERT INTO teachers (name, email, unique_code, subject, password) VALUES (?, ?, ?, ?, ?)", 
+                       (name, email, unique_code, subject, hash_password(password)))
         conn.commit()
         conn.close()
         return "success"
@@ -50,32 +61,18 @@ def register_teacher(email, unique_code, subject, password):
         conn.close()
         return "Email or Unique Code already exists."
 
+
 # Function to generate a QR Code
-def generate_qr(email, unique_code):
-    qr_data = f"Teacher Email: {email}\nUnique Code: {unique_code}"
+def generate_qr(name, email, subject, unique_code):
+    qr_data = f"Name: {name}\nTeacher Email: {email}\nSubject: {subject}\nUnique Code: {unique_code}"
     qr = qrcode.make(qr_data)
 
-    # Convert QR code to BytesIO object for Streamlit display
     qr_bytes = BytesIO()
     qr.save(qr_bytes, format="PNG")
     qr_bytes.seek(0)
     
     return qr_bytes  # Return QR image in byte format
 
-def parse_qr_data(qr_content):
-    print(f"📜 Scanned QR Content: {qr_content}")  # Debug print
-    
-    try:
-        qr_lines = qr_content.strip().split("\n")  # Split into lines
-        email = qr_lines[0].split(": ")[1].strip()
-        unique_code = qr_lines[1].split(": ")[1].strip()
-        
-        print(f"✅ Extracted Email: {email}, Unique Code: {unique_code}")  # Debugging
-        
-        return email, unique_code
-    except IndexError:
-        print("❌ Error extracting QR data. Check QR formatting.")
-        return None, None
 
 # Function to display the signup page
 def show_signup():
@@ -84,19 +81,20 @@ def show_signup():
 
     st.title("📚 Teacher Account Creation")
 
+    name = st.text_input("👤 Full Name")
     email = st.text_input("📧 Email")
     unique_code = st.text_input("🏫 Teacher's Unique Code (10-character code provided by the institute)")
     subject = st.selectbox("📖 Subject", ["Physics", "Maths", "FDA", "PPS", "Vedic Maths", "UHV", "EC"])
     password = st.text_input("🔒 Password", type="password")
 
     if st.button("Create Account"):
-        if email and unique_code and subject and password:
-            result = register_teacher(email, unique_code, subject, password)
+        if name and email and unique_code and subject and password:
+            result = register_teacher(name, email, unique_code, subject, password)
             if result == "success":
                 st.success("✅ Account created successfully!")
 
                 # Generate QR Code
-                qr_img = generate_qr(email, unique_code)
+                qr_img = generate_qr(name, email, subject, unique_code)
 
                 # Display QR Code
                 st.image(qr_img, caption="📌 Your Unique QR Code", use_container_width=False)
