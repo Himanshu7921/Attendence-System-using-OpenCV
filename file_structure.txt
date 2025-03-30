@@ -1,0 +1,40 @@
+Attendence System using OpenCV/
+│   ├── file_structure.txt
+│   ├── generate_project_structure.py
+│   ├── QR_code.png
+│   ├── README.md
+│   ├── requirements.txt
+│   ├── teachers.db
+│   ├── backend/
+│   │   ├── database.py
+│   │   ├── main.py
+│   │   ├── models.py
+│   │   ├── routes/
+│   │   │   ├── auth.py
+│   │   │   ├── face_recognition.py
+│   │   │   ├── qr_scan.py
+│   │   │   ├── reports.py
+│   ├── face_recognition/
+│   │   ├── face_scan.py
+│   ├── frontend/
+│   │   ├── app.py
+│   │   ├── attendance.db
+│   │   ├── dashboard.py
+│   │   ├── debugging.py
+│   │   ├── login.py
+│   │   ├── signup.py
+│   │   ├── students.db
+│   │   ├── teachers.db
+│   │   ├── utils.py
+│   │   ├── __pycache__/
+│   │   │   ├── login.cpython-310.pyc
+│   │   │   ├── signup.cpython-310.pyc
+│   ├── qr_code/
+│   │   ├── generate_qr.py
+│   ├── reports/
+│   │   ├── generate_report.py
+│   │   ├── send_email.py
+│   ├── student_registration/
+│   │   ├── student_registration.py
+│   │   ├── __pycache__/
+│   │   │   ├── student_registration.cpython-310.pyc
