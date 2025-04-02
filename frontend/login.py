@@ -75,7 +75,7 @@ def scan_qr_code():
             break
     
     cap.release()
-    cv2.destroyAllWindows()
+    # cv2.waitKey(1)
     return None, None
 
 # Load known student faces
