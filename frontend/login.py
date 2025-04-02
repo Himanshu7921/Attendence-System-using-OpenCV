@@ -119,8 +119,7 @@ def mark_attendance(name):
 
         conn.commit()
 
-# Export unique attendance with the oldest timestamp
-# Export unique attendance with the oldest timestamp
+# Export unique attendance with the oldest timestamp and clear the attendance database
 def export_attendance_to_excel(teacher_name, subject_name):
     formatted_date = datetime.datetime.now().strftime("%d-%m-%Y")  # Format: 30-03-2025
     
@@ -130,16 +129,21 @@ def export_attendance_to_excel(teacher_name, subject_name):
     
     filename = f"{sanitized_teacher_name}_{sanitized_subject_name}_{formatted_date}.xlsx"
 
-    # Generate the DataFrame directly from the database
     with sqlite3.connect(ATTENDANCE_DB_PATH) as conn:
         df = pd.read_sql("SELECT name, date, time FROM attendance", conn)
-    
-    # Save the DataFrame to a BytesIO object instead of a file
-    excel_file = io.BytesIO()
-    df.to_excel(excel_file, index=False, engine="openpyxl")
-    excel_file.seek(0)  # Move the cursor to the beginning of the file
+
+        # Save the DataFrame to a BytesIO object instead of a file
+        excel_file = io.BytesIO()
+        df.to_excel(excel_file, index=False, engine="openpyxl")
+        excel_file.seek(0)  # Move the cursor to the beginning of the file
+
+        # ✅ Clear the attendance table after exporting
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM attendance")  # Remove all attendance records
+        conn.commit()
 
     return excel_file, filename
+
 
 # Scan and recognize student faces
 def scan_faces():

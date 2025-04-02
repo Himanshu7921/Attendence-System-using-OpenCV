@@ -1,0 +1,20 @@
+Attendence System using OpenCV/
+│   ├── generate_project_structure.py
+│   ├── project_structure.txt
+│   ├── README.md
+│   ├── requirements.txt
+│   ├── face_recognition/
+│   │   ├── face_scan.py
+│   ├── frontend/
+│   │   ├── app.py
+│   │   ├── dashboard.py
+│   │   ├── login.py
+│   │   ├── signup.py
+│   │   ├── utils.py
+│   ├── qr_code/
+│   │   ├── generate_qr.py
+│   ├── reports/
+│   │   ├── generate_report.py
+│   │   ├── send_email.py
+│   ├── student_registration/
+│   │   ├── student_registration.py

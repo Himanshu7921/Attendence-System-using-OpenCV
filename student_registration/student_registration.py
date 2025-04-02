@@ -48,7 +48,13 @@ def save_student(name, branch, reg_number, encoding):
         conn.commit()
         conn.close()
         st.success(f"✅ {name} registered successfully!")
-    
+        
+        # Clear input fields after successful registration
+        st.session_state.student_name = ""
+        st.session_state.branch = ""
+        st.session_state.reg_number = ""
+        st.session_state.uploaded_image = None
+
     except sqlite3.IntegrityError:
         st.error(f"❌ Registration number {reg_number} already exists!")
     except Exception as e:
@@ -75,9 +81,19 @@ def main():
 
     init_db()  # Ensure database is created
 
-    student_name = st.text_input("Enter Student Name")
-    branch = st.text_input("Enter Branch")
-    reg_number = st.text_input("Enter Registration Number")
+    # Initialize session state for input fields
+    if "student_name" not in st.session_state:
+        st.session_state.student_name = ""
+    if "branch" not in st.session_state:
+        st.session_state.branch = ""
+    if "reg_number" not in st.session_state:
+        st.session_state.reg_number = ""
+    if "uploaded_image" not in st.session_state:
+        st.session_state.uploaded_image = None
+
+    student_name = st.text_input("Enter Student Name", st.session_state.student_name)
+    branch = st.text_input("Enter Branch", st.session_state.branch)
+    reg_number = st.text_input("Enter Registration Number", st.session_state.reg_number)
 
     # ✅ Streamlit Camera Input
     uploaded_image = st.camera_input("Capture Your Face")
@@ -90,10 +106,10 @@ def main():
             st.error("❌ Please enter all details (Name, Branch, Registration Number) and capture your face.")
 
     # ✅ Debug: Check if the database exists
-    if os.path.exists(DB_PATH):
-        st.success(f"✅ Database is located at: {DB_PATH}")
-    else:
-        st.error("❌ Database file is missing!")
+    # if os.path.exists(DB_PATH):
+    #     st.success(f"✅ Database is located at: {DB_PATH}")
+    # else:
+    #     st.error("❌ Database file is missing!")
 
 if __name__ == "__main__":
     main()

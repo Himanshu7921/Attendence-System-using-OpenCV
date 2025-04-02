@@ -2,15 +2,17 @@ import streamlit as st
 import sys
 import os
 
+
 # Ensure the backend module path is included
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
+# Streamlit Page Config
+st.set_page_config(page_title="Teacher Portal", page_icon="🔑", layout="centered")
 
 import login
 import signup
 from student_registration.student_registration import main as student_registration_main
-
-# Streamlit Page Config
-st.set_page_config(page_title="Teacher Portal", page_icon="🔑", layout="centered")
 
 # Sidebar Navigation
 st.sidebar.title("Navigation")

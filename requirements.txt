@@ -1,0 +1,6 @@
+numpy==2.2.4
+opencv_python==4.11.0.86
+pandas==2.2.3
+Pillow==11.2.0
+qrcode==8.0
+streamlit==1.43.1
